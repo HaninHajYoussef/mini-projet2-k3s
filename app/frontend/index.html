@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestionnaire de tâches</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 40px auto; }
+    li { margin: 8px 0; } .done { text-decoration: line-through; color: gray; }
+    button { margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Mes tâches</h1>
+  <input id="title" placeholder="Nouvelle tâche">
+  <button onclick="addTask()">Ajouter</button>
+  <ul id="list"></ul>
+  <script>
+    const API = "/api/tasks";
+    async function load() {
+      const tasks = await (await fetch(API)).json();
+      const ul = document.getElementById("list");
+      ul.innerHTML = "";
+      tasks.forEach(t => {
+        const li = document.createElement("li");
+        const span = document.createElement("span");
+        span.textContent = t.title;
+        if (t.done) span.className = "done";
+        const b1 = document.createElement("button");
+        b1.textContent = t.done ? "Rouvrir" : "Terminer";
+        b1.onclick = async () => {
+          await fetch(`${API}/${t.id}`, { method: "PUT",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ done: !t.done }) });
+          load();
+        };
+        const b2 = document.createElement("button");
+        b2.textContent = "Supprimer";
+        b2.onclick = async () => { await fetch(`${API}/${t.id}`, { method: "DELETE" }); load(); };
+        li.append(span, b1, b2);
+        ul.appendChild(li);
+      });
+    }
+    async function addTask() {
+      const input = document.getElementById("title");
+      if (!input.value.trim()) return;
+      await fetch(API, { method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ title: input.value }) });
+      input.value = "";
+      load();
+    }
+    load();
+  </script>
+</body>
+</html>

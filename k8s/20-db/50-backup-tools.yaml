@@ -1,0 +1,25 @@
+# Pod utilitaire : voir les sauvegardes et tester la restauration
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backup-tools
+  namespace: todo-app
+  labels: { app: todo, tier: backup }
+spec:
+  containers:
+    - name: tools
+      image: postgres:16-alpine
+      command: ["sleep", "3600"]
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef: { name: db-credentials, key: POSTGRES_PASSWORD }
+      volumeMounts:
+        - { name: backup, mountPath: /backup }
+      resources:
+        requests: { cpu: 50m, memory: 64Mi }
+        limits: { cpu: 200m, memory: 128Mi }
+  volumes:
+    - name: backup
+      persistentVolumeClaim:
+        claimName: backup-pvc
